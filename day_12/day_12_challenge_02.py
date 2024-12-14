@@ -11,29 +11,6 @@ def is_point_adjacent_to_line(element,line):
             return True
     return False
 
-def add_point_to_side_dictionary(sides_dict, point, side_key):
-    if side_key not in sides_dict.keys():
-        sides_dict[side_key] = [[point]]
-    else:
-        lines = sides_dict[side_key]
-        included_lines = []
-        for line in lines:
-            if is_point_adjacent_to_line(point,line):
-                included_lines.append(line)
-        if len(included_lines) == 0:
-            lines.append([point])
-        elif len(included_lines) == 1:
-            included_lines[0].append(point)
-        else:
-            new_line = [point]
-            for point_item in included_lines[0]:
-                new_line.append(point_item)
-            for point_item in included_lines[1]:
-                new_line.append(point_item)
-            lines.append(new_line)
-            lines.remove(included_lines[0])
-            lines.remove(included_lines[1])
-
 class Region:
     def __init__(self, point):
         self.elements = [point]
@@ -44,34 +21,39 @@ class Region:
     def is_adjacent(self, element):
         return is_point_adjacent_to_line(element,self.elements)
 
+    @property
     def calculate_cost(self):
         area = len(self.elements)
-        sides_dict = dict()
+        sides_in_perimeter = []
         for point in self.elements:
             x_coordinate,y_coordinate = point[0],point[1]
             # top point
             top_point = x_coordinate, y_coordinate + 1
             if top_point not in self.elements:
-                side_key = f"h-{y_coordinate + 1 }"
-                add_point_to_side_dictionary(sides_dict, top_point, side_key)
+                sides_in_perimeter.append(f"T-{x_coordinate}-{y_coordinate}")
             # bottom point
             bottom_point = x_coordinate, y_coordinate - 1
             if bottom_point not in self.elements:
-                side_key = f"h-{y_coordinate}"
-                add_point_to_side_dictionary(sides_dict, bottom_point, side_key)
+                sides_in_perimeter.append(f"B-{x_coordinate}-{y_coordinate}")
             # left point
             left_point = x_coordinate - 1, y_coordinate
             if left_point not in self.elements:
-                side_key = f"v-{x_coordinate}"
-                add_point_to_side_dictionary(sides_dict, left_point, side_key)
+                sides_in_perimeter.append(f"L-{x_coordinate}-{y_coordinate}")
             # right point
             right_point = x_coordinate + 1, y_coordinate
             if right_point not in self.elements:
-                side_key = f"v-{x_coordinate + 1}"
-                add_point_to_side_dictionary(sides_dict, right_point, side_key)
+                sides_in_perimeter.append(f"R-{x_coordinate}-{y_coordinate}")
+
         sides = 0
-        for side_key in sides_dict.keys():
-            sides += len(sides_dict[side_key])
+        for side in sides_in_perimeter:
+            [s,x,y] = side.split('-')
+            delta = -1,0
+            if s in ['L','R']:
+                delta = 0,-1
+            ref_side = f"{s}-{int(x)+delta[0]}-{int(y)+delta[1]}"
+            if ref_side not in sides_in_perimeter:
+                sides += 1
+
         return sides * area
 
     @classmethod
