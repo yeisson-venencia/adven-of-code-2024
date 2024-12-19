@@ -34,6 +34,9 @@ def process_location(layout, path, location_map, e_visited):
     if layout[y][x] == '#':
         return []
 
+    if cost > e_visited[0]:
+        return []
+
     if (location, heading) in location_map and cost > location_map[(location, heading)]:
         return []
 
