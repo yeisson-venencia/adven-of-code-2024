@@ -28,24 +28,30 @@ def get_additional_cost(heading, direction):
         return 1
     return 1001
 
-def process_location(layout, path, location_map):
+def process_location(layout, path, location_map, e_visited):
     location, heading, cost, visited = path
     x, y = location
     if layout[y][x] == '#':
         return []
 
-    if (location, heading) in location_map and location_map[(location, heading)][0] < cost:
+    if (location, heading) in location_map and cost > location_map[(location, heading)]:
         return []
 
-    if (location, heading) not in location_map:
-        location_map[(location, heading)] = (cost,visited.copy())
-    elif cost == location_map[(location, heading)][0]:
-        for item in visited:
-            location_map[(location, heading)][1].add(item)
-    else:
-        location_map[(location, heading)] = (cost,visited.copy())
+    location_map[(location, heading)] = cost
 
     if layout[y][x] == 'E':
+        e_cost = e_visited[0]
+        if cost == e_cost:
+            for v_location in visited:
+                e_visited[1].add(v_location)
+            e_visited[1].add(location)
+        elif cost < e_cost:
+            new_e_set = set()
+            for v_location in visited:
+                new_e_set.add(v_location)
+            new_e_set.add(location)
+            e_visited[1] = new_e_set
+            e_visited[0] = cost
         return []
 
     new_paths = []
@@ -66,29 +72,21 @@ def main():
     layout = load_layout()
     start_location = get_map_location(layout,'S')
     location_map = dict()
+    e_visited = [1000000000, set()]
     path_pile = [(start_location,(1,0),0,set())]
     while len(path_pile) > 0:
         current_path = path_pile.pop(0)
-        new_paths = process_location(layout, current_path, location_map)
+        new_paths = process_location(layout, current_path, location_map, e_visited)
         for path in new_paths:
             path_pile.append(path)
 
-    end_location = get_map_location(layout, 'E')
-    ends_dict = []
-    for key,value in location_map.items():
-        if key[0] == end_location:
-            ends_dict.append(value)
-    min_value = min([x for x,y in ends_dict])
-    min_ends_dict = [x for x in ends_dict if x[0] == min_value]
-    final_visited = set()
-    for value, locations in min_ends_dict:
-        for location in locations:
-            final_visited.add(location)
-
-    # for location in final_visited:
+    # end_location = get_map_location(layout, 'E')
+    # for location in e_visited[1]:
     #     x,y = location
     #     layout[y][x] = 'O'
     # layout[start_location[1]][start_location[0]] = 'S'
+    # layout[end_location[1]][end_location[0]] = 'E'
     # print_layout(layout)
-    print(len(final_visited) + 1)
+
+    print(len(e_visited[1]))
 main()
